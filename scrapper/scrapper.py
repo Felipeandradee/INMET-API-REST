@@ -40,11 +40,20 @@ class ScrapperINMET:
         response.raise_for_status()
         return self.is_logged_in(response)
 
-    def get_dados_mes(self, uf: str, cidade: str, dtInicio: datetime.datetime, dtFim: datetime.datetime):
+    def get_dados(self, tipo_periodo: str, uf: str, cidade: str, dtInicio: datetime.datetime, dtFim: datetime.datetime):
 
         self.login()
 
-        url = '/'.join([self.base_url, "projetos/rede/pesquisa/form_mapas_mensal.php"])
+        if tipo_periodo == 'mes':
+            url = '/'.join([self.base_url, "projetos/rede/pesquisa/form_mapas_mensal.php"])
+            url_post = '/'.join([self.base_url, "projetos/rede/pesquisa/mapas_mensal_sem.php"])
+
+        elif tipo_periodo == 'dia':
+            url = '/'.join([self.base_url, "projetos/rede/pesquisa/form_mapas_c_diario.php"])
+            url_post = '/'.join([self.base_url, "projetos/rede/pesquisa/mapas_c_diario.php"])
+        else:
+            raise NotImplementedError
+
         self.session.get(url)
 
         payload = {
@@ -58,8 +67,7 @@ class ScrapperINMET:
             'btnProcesso': ' Pesquisa '
         }
 
-        url = '/'.join([self.base_url, "projetos/rede/pesquisa/mapas_mensal_sem.php"])
-        response = self.session.post(url, data=payload)
+        response = self.session.post(url_post, data=payload)
         pattern = cidade + '.*href=([^\>]+) target'
         url_result = re.search(pattern, response.text, flags=re.IGNORECASE).group(1)
         response = self.session.get(url_result)
